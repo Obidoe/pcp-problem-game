@@ -29,6 +29,7 @@ class Domino:
         self.offset_x = 0
         self.offset_y = 0
         self.in_working_area = False
+        self.highlighted = False  # for highlighting valid next dominoes
 
     #check if a point is inside this domino
     def contains_point(self, px, py): 
@@ -90,7 +91,12 @@ class Domino:
         square_size = 10
         spacing = 5
         
-        #draw domino base w/ border
+        #draw domino base w/ border (highlight if this is a valid next domino)
+        if self.highlighted:
+            # Draw glowing yellow border for highlighted dominoes
+            pygame.draw.rect(surface, (255, 255, 0), (draw_x - 4, draw_y - 4, self.width + 8, self.height + 8))
+            pygame.draw.rect(surface, (255, 255, 0), (draw_x - 2, draw_y - 2, self.width + 4, self.height + 4))
+        
         pygame.draw.rect(surface, (255, 255, 255), (draw_x, draw_y, self.width, self.height))
         pygame.draw.rect(surface, (0, 0, 0), (draw_x, draw_y, self.width, self.height), 2)
         pygame.draw.line(surface, (0, 0, 0), (draw_x, draw_y + self.height / 2), (draw_x + self.width, draw_y + self.height / 2), 3)
