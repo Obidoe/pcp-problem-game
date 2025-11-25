@@ -27,6 +27,7 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 - **Real-time display of concatenated sequences**
 - **Win condition detection and feedback**
 - Clear and New Game buttons
+- Timer system tracking 
 
 ## Project Structure
 
@@ -46,6 +47,7 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 - **Updates highlights based on current game state**
 - **Checks win condition and displays feedback**
 - Handles UI buttons (Clear, New Game)
+- Visual timer display
 
 ## Group Members
 - Noor Sidhu

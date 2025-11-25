@@ -1,3 +1,4 @@
+import time
 from domino import Domino
 import pygame
 
@@ -36,10 +37,48 @@ class Game:
         
         # button for clear/reset
         self.difficulty_button_rect = pygame.Rect(self.screen_width - 400, 20, 120, 40)
+        self.difficulty_button_rect = pygame.Rect(self.screen_width - 400, 20, 120, 40)
         self.clear_button_rect = pygame.Rect(self.screen_width - 250, 20, 100, 40)
         self.new_game_button_rect = pygame.Rect(self.screen_width - 130, 20, 110, 40)
         
+        # time variables
+        self.timer_start = None
+        self.timer_running = False
+        self.elapsed_time = 0
+        self.last_time = 0
+
         self.running = True
+
+    def start_timer(self):
+            # start timer when first domino is placed
+            if not self.timer_running and len(self.working_area_dominos) == 0:
+                self.timer_start = time.time()
+                self.timer_running = True
+                self.elapsed_time = 0
+                print("Timer started")
+
+    def stop_timer(self):
+            # stop timer when sequences match 
+            if self.timer_running:
+                self.timer_running = False
+                self.elapsed_time = time.time() - self.timer_start
+                self.last_time = self.elapsed_time
+                print(f"Time taken to win: {self.last_time:.2f} seconds")
+
+    def reset_timer(self):
+            # reset timer when working area is cleared or new game button is pressed
+            self.timer_running = False
+            self.elapsed_time = 0
+            self.timer_start = None
+            self.last_time = 0
+            print("Timer reset")
+    
+    def get_current_time(self):
+        # get current elapsed time in seconds
+        if self.timer_running:
+            return time.time() - self.timer_start 
+        else:
+            return self.elapsed_time
 
     def is_in_working_area(self, y):
         # check if y cord is in working area
@@ -90,6 +129,11 @@ class Game:
         if self.new_game_button_rect.collidepoint(pos):
             self.new_game()
             return
+        
+        # check if clicking new game button
+        if self.new_game_button_rect.collidepoint(pos):
+            self.new_game()
+            return
 
         if self.difficulty_button_rect.collidepoint(pos):
             self.resetDifficulty()
@@ -121,11 +165,18 @@ class Game:
         if self.dragged_domino:
             # check if domino was dropped in working area
             if self.is_in_working_area(self.dragged_domino.y):
+                if len(self.working_area_dominos) == 0:
+                    # start timer on first domino placed
+                    self.start_timer()
                 if self.dragged_domino not in self.working_area_dominos:
                     self.working_area_dominos.append(self.dragged_domino)
                 self.dragged_domino.in_working_area = True
                 # reposition dominoes in sequence
                 self.reposition_working_area_dominos()
+                # stop timer if sequences match
+                top_seq, bottom_seq = self.get_concatenated_sequences()
+                if top_seq == bottom_seq and len(top_seq) > 0:
+                    self.stop_timer()
             else:
                 # if not in working area, don't add it (it's discarded)
                 pass
@@ -150,8 +201,9 @@ class Game:
             domino.y = y_pos
     
     def clear_working_area(self):
-        """Clear all dominoes from working area"""
+        """Clear all dominoes from working area and reset timer"""
         self.working_area_dominos = []
+        self.reset_timer()
         self.update_highlights()
 
 
@@ -182,6 +234,34 @@ class Game:
         if playerWon:
             self.frameDone = True
         return playerWon
+    
+    def draw_timer(self):
+        """Draw the timer display"""
+        timer_font = pygame.font.Font(None, 36)
+        bg_color = (0, 100, 0) # Dark green background
+
+        if self.timer_running:
+            current_time = self.get_current_time()
+            timer_text = f"Timer: {current_time:.2f}s"
+            color = (255, 255, 100)  # Yellow for running timer
+            
+        else:
+            if self.last_time > 0:
+                timer_text = f"Win time: {self.last_time:.2f}s"
+                color = (255, 215, 0)  # Gold for final time
+            else:
+                timer_text = "Timer: 0.00s"
+                color = (150, 255, 150)  # Green for timer not started
+        
+        text_surface = timer_font.render(timer_text, True, color)
+        timer_rect = text_surface.get_rect()
+        timer_rect.midtop = (self.screen_width // 2, 25) # center top position   
+
+        # Draw background rectangle for better visibility
+        bg_rect = timer_rect.inflate(15, 8)
+        pygame.draw.rect(self.screen, bg_color, bg_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2) # white border
+        self.screen.blit(text_surface, timer_rect)
 
     def run(self):
         print('Starting game...')
@@ -249,6 +329,9 @@ class Game:
             text = font.render("Working Area (Drop Here)", True, (255, 255, 255))
             self.screen.blit(text, (20, self.working_area_y - 40))
             
+            # Draw timer
+            self.draw_timer()
+
             # Update highlights every frame to ensure they're current
             self.update_highlights()
             
