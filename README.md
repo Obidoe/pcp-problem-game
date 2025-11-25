@@ -20,7 +20,7 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 
 ## Features
 - Random domino generation (no duplicates)
-- Visual domino rendering with colored squares
+- Visual domino rendering with coloured squares
 - Drag-and-Drop manipulation
 - **Automatic left-to-right sequencing in working area**
 - **Highlighting of valid next dominoes (yellow border)**
@@ -55,3 +55,15 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 - Tanisha Ahuja
 - Zac Adams
 - Jasraj Gosal
+
+## Work Log
+
+|   **Student**   | **Task** 
+|    --------     | -------- 
+| Noor Sidhu      | -Drag and drop manipulation<br> -Create working space area  
+| Elijah Duchak   |                  
+| Jasmine Seerha  | -Implemented win timer
+| Harry Rai       | -Level difficulty manipulation
+| Tanisha Ahuja   | -Win condition detection and feedback<br> -Highlighting of next valid dominoes<br> -Calculation of Concatenated top/bottom sequences
+| Zac Adams       | -Random domino generation<br> -Visual domino rendering with random coloured squares
+| Jasraj Gosal    |
