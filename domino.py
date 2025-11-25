@@ -10,13 +10,13 @@ class Domino:
         'BLUE': (0, 0, 255)
     }
     generated = set()
-
+    difficulty = (0, 0)
     def __init__(self, x=0, y=0):
         while True:
             self.width = 80
             self.height = 160
-            self.top = self.generate_domino()
-            self.bottom = self.generate_domino()
+            self.top = self.generate_domino(self.difficulty)
+            self.bottom = self.generate_domino(self.difficulty)
             pair = (tuple(self.top), tuple(self.bottom))
             if pair not in Domino.generated:
                 Domino.generated.add(pair)
@@ -35,10 +35,10 @@ class Domino:
     def contains_point(self, px, py): 
         return (self.x <= px <= self.x +self.width and self.y <= py <= self.y+self.height)
 
-    def generate_domino(self):
+    def generate_domino(self, difficulty):
 
         # first we choose how many squares we will have
-        num_squares = random.randint(1, 3)
+        num_squares = random.randint(1 + difficulty[0], 3 + difficulty[1])
         # then we generate the colored squares
         return [random.choice(list(self.colors.keys())) for i in range(num_squares)]
 

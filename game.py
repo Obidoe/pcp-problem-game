@@ -20,7 +20,7 @@ class Game:
         # Domino Generation
         self.domino_index = 0
         self.dominos = [Domino() for i in range(10)]
-
+        self.frameDone = False
         # set initial positions for dominoes in the set area
         for i, d in enumerate(self.dominos):
             d.x = 50 + i * 120
@@ -35,6 +35,7 @@ class Game:
         self.working_area_height = 200
         
         # button for clear/reset
+        self.difficulty_button_rect = pygame.Rect(self.screen_width - 400, 20, 120, 40)
         self.clear_button_rect = pygame.Rect(self.screen_width - 250, 20, 100, 40)
         self.new_game_button_rect = pygame.Rect(self.screen_width - 130, 20, 110, 40)
         
@@ -89,7 +90,11 @@ class Game:
         if self.new_game_button_rect.collidepoint(pos):
             self.new_game()
             return
-        
+
+        if self.difficulty_button_rect.collidepoint(pos):
+            self.resetDifficulty()
+            return
+
         # check if clicking on a domino in the set 
         for d in self.dominos:
             if d.contains_point(pos[0], pos[1]):
@@ -148,9 +153,13 @@ class Game:
         """Clear all dominoes from working area"""
         self.working_area_dominos = []
         self.update_highlights()
-    
+
+
     def new_game(self):
         """Generate new set of dominoes"""
+        if self.frameDone:
+            self.frameDone = False
+            Domino.difficulty = (Domino.difficulty[0] + 1, Domino.difficulty[1] + 1)
         Domino.generated.clear()
         self.dominos = [Domino() for i in range(10)]
         # set initial positions for dominoes in the set area
@@ -158,13 +167,21 @@ class Game:
             d.x = 50 + i * 120
             d.y = 100
         self.clear_working_area()
-    
+
+    def resetDifficulty(self):
+        if Domino.difficulty != (0,0):
+            Domino.difficulty = (Domino.difficulty[0] - 1, Domino.difficulty[1] - 1)
+            self.new_game()
+
     def check_win_condition(self):
         """Check if top and bottom sequences match"""
         if not self.working_area_dominos:
             return False
         top_seq, bottom_seq = self.get_concatenated_sequences()
-        return top_seq == bottom_seq and len(top_seq) > 0
+        playerWon = top_seq == bottom_seq and len(top_seq) > 0
+        if playerWon:
+            self.frameDone = True
+        return playerWon
 
     def run(self):
         print('Starting game...')
@@ -221,7 +238,13 @@ class Game:
             new_game_text = button_font.render("New Game", True, (255, 255, 255))
             text_rect = new_game_text.get_rect(center=self.new_game_button_rect.center)
             self.screen.blit(new_game_text, text_rect)
-            
+
+            pygame.draw.rect(self.screen, (190, 140, 35), self.difficulty_button_rect)
+            pygame.draw.rect(self.screen, (255, 255, 255), self.difficulty_button_rect, 2)
+            new_game_text2 = button_font.render("Lower Level", True, (255, 255, 255))
+            text_rect2 = new_game_text2.get_rect(center=self.difficulty_button_rect.center)
+            self.screen.blit(new_game_text2, text_rect2)
+
             # label for working area
             text = font.render("Working Area (Drop Here)", True, (255, 255, 255))
             self.screen.blit(text, (20, self.working_area_y - 40))
