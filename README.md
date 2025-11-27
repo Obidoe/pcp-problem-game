@@ -1,9 +1,8 @@
-# pcp-problem-game
+# PCP-Problem-Game
 PCP Problem Domino Sorting Game!  
-Uses pygame-ce
 
 ## Overview
-This project is an interactive game designed to display randomly generated Post Correspondence Problem (PCP) dominoes using coloured squares. 
+This project is an interactive game designed to display randomly generated Post Correspondence Problem (PCP) dominoes using coloured squares, by using the **pygame-ce** library.
 Each domino consists of a top and bottom sequence of colours chosen from three possible colours: red, green, and blue. 
 The purpose of the game is not to solve PCP (which is undecidable), but to allow users to experiement with randomly-generated dominoes and try to construct a matching sequence on the top and bottom strings. 
 
@@ -22,10 +21,10 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 - Random domino generation (no duplicates)
 - Visual domino rendering with coloured squares
 - Drag-and-Drop manipulation
-- **Automatic left-to-right sequencing in working area**
-- **Highlighting of valid next dominoes (yellow border)**
-- **Real-time display of concatenated sequences**
-- **Win condition detection and feedback**
+- Automatic left-to-right sequencing in working area
+- Highlighting of valid next dominoes (yellow border)
+- Real-time display of concatenated sequences
+- Win condition detection and feedback
 - Clear and New Game buttons
 - Timer system tracking 
 
@@ -36,16 +35,16 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 - Generates random top/bottom sequences (1-3 squares each)
 - Ensures no duplicate domino pairs
 - Draws each domino with its coloured squares
-- **Implements highlighting for valid next moves**
+- Implements highlighting for valid next moves
 
 ### game.py
 - Initializes Pygame
 - Creates a list of 10 domino objects
 - Manages drag-and-drop interactions
-- **Implements sequencing logic for working area**
-- **Calculates concatenated top/bottom sequences**
-- **Updates highlights based on current game state**
-- **Checks win condition and displays feedback**
+- Implements sequencing logic for working area
+- Calculates concatenated top/bottom sequences
+- Updates highlights based on current game state
+- Checks win condition and displays feedback
 - Handles UI buttons (Clear, New Game)
 - Visual timer display
 
