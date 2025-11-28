@@ -9,6 +9,21 @@ This project is an interactive game designed to display randomly generated Post 
 Each domino consists of a top and bottom sequence of colours chosen from three possible colours: red, green, and blue. 
 The purpose of the game is not to solve PCP (which is undecidable), but to allow users to experiement with randomly-generated dominoes and try to construct a matching sequence on the top and bottom strings. 
 
+## Requirements
+- Python 3.10 or later
+- pygame-ce
+
+## How to Install and Run
+1. Install Python from https://www.python.org/downloads/ (if you don’t already have it)
+2. Open a terminal (or command prompt) and run:
+   ```bash
+   pip install pygame-ce
+   ```
+3. From the project directory, run:
+   ```bash
+   python main.py
+   ```
+
 ## Features
 - Random domino generation (no duplicates)
 - Visual domino rendering with coloured squares
