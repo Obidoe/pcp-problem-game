@@ -35,12 +35,21 @@ class Game:
         self.working_area_y = 400
         self.working_area_height = 200
         
+
+        button_width = 130
+        button_height = 40
+        button_y = 20
+        button_spacing = 20
+
+        new_x = self.screen_width - button_width - 20
+        clear_x = new_x - button_width - button_spacing
+        level_x = clear_x - button_width - button_spacing
+
         # button for clear/reset
-        self.difficulty_button_rect = pygame.Rect(self.screen_width - 400, 20, 120, 40)
-        self.difficulty_button_rect = pygame.Rect(self.screen_width - 400, 20, 120, 40)
-        self.clear_button_rect = pygame.Rect(self.screen_width - 250, 20, 100, 40)
-        self.new_game_button_rect = pygame.Rect(self.screen_width - 130, 20, 110, 40)
-        
+        self.difficulty_button_rect = pygame.Rect(level_x, button_y, button_width, button_height)
+        self.clear_button_rect = pygame.Rect(clear_x, button_y, button_width, button_height)
+        self.new_game_button_rect = pygame.Rect(new_x, button_y, button_width, button_height)
+         
         # time variables
         self.timer_start = None
         self.timer_running = False
@@ -255,10 +264,11 @@ class Game:
         
         text_surface = timer_font.render(timer_text, True, color)
         timer_rect = text_surface.get_rect()
-        timer_rect.midtop = (self.screen_width // 2, 25) # center top position   
+        timer_rect.center = (self.screen_width // 2, self.clear_button_rect.centery)
 
         # Draw background rectangle for better visibility
-        bg_rect = timer_rect.inflate(15, 8)
+        bg_rect = timer_rect.inflate(30, 12)
+        bg_rect.y -= 2
         pygame.draw.rect(self.screen, bg_color, bg_rect)
         pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2) # white border
         self.screen.blit(text_surface, timer_rect)
@@ -343,8 +353,9 @@ class Game:
                 # Show instructions when working area is empty
                 instruction_font = pygame.font.Font(None, 26)
                 inst_text = instruction_font.render("Drag any domino to start! (Yellow border = valid next move)", True, (255, 255, 0))
-                self.screen.blit(inst_text, (self.screen_width // 2 - 330, self.working_area_y + 90))
-            
+                inst_rect = inst_text.get_rect(center=(self.screen_width // 2, self.working_area_y + self.working_area_height // 2))
+                self.screen.blit(inst_text, inst_rect)
+
             # Check and display win condition
             if self.check_win_condition():
                 self.draw_win_message()
