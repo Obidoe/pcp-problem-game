@@ -45,21 +45,45 @@ class Game:
         clear_x = new_x - button_width - button_spacing
         level_x = clear_x - button_width - button_spacing
 
-        # button for clear/reset
+        # button for difficulty/clear/new game/game mode
         self.difficulty_button_rect = pygame.Rect(level_x, button_y, button_width, button_height)
         self.clear_button_rect = pygame.Rect(clear_x, button_y, button_width, button_height)
         self.new_game_button_rect = pygame.Rect(new_x, button_y, button_width, button_height)
-         
-        # time variables
+        self.game_mode_button_rect = pygame.Rect(new_x, self.screen_height - button_height - 20, button_width, button_height)
+        
+        # time variables (classic mode uses these)
         self.timer_start = None
         self.timer_running = False
         self.elapsed_time = 0
         self.last_time = 0
 
+        # default starts at classic
+        self.game_mode = "classic"
+        # default for timed mode
+        self.timed_difficulty = "easy"
+
+        self.time_limits = {
+            "easy": 120.0,
+            "medium": 60.0,
+            "hard": 30.0
+        }
+        self.time_remaining = None
+        self.countdown_active = False
+        self.timer_box_width = 260
+
         self.running = True
 
     def start_timer(self):
-            # start timer when first domino is placed
+        # start timer when first domino is placed
+        if self.game_mode == "timed":
+            if not self.countdown_active:
+                if self.time_remaining is None:
+                    self.time_remaining = float(self.time_limits[self.timed_difficulty])
+                self.countdown_active = True
+                # reset last_time so win time can be computed
+                self.last_time = 0
+                print(f"Timed countdown started: {self.timed_difficulty} ({self.time_remaining}s)")
+        else:
             if not self.timer_running and len(self.working_area_dominos) == 0:
                 self.timer_start = time.time()
                 self.timer_running = True
@@ -67,20 +91,20 @@ class Game:
                 print("Timer started")
 
     def stop_timer(self):
-            # stop timer when sequences match 
-            if self.timer_running:
-                self.timer_running = False
-                self.elapsed_time = time.time() - self.timer_start
-                self.last_time = self.elapsed_time
-                print(f"Time taken to win: {self.last_time:.2f} seconds")
+        # stop timer when sequences match 
+        if self.timer_running:
+            self.timer_running = False
+            self.elapsed_time = time.time() - self.timer_start
+            self.last_time = self.elapsed_time
+            print(f"Time taken to win: {self.last_time:.2f} seconds")
 
     def reset_timer(self):
-            # reset timer when working area is cleared or new game button is pressed
-            self.timer_running = False
-            self.elapsed_time = 0
-            self.timer_start = None
-            self.last_time = 0
-            print("Timer reset")
+        # reset timer when working area is cleared or new game button is pressed
+        self.timer_running = False
+        self.elapsed_time = 0
+        self.timer_start = None
+        self.last_time = 0
+        print("Timer reset")
     
     def get_current_time(self):
         # get current elapsed time in seconds
@@ -128,7 +152,44 @@ class Game:
             if d.top == current_bottom:
                 d.highlighted = True
 
+    def toggle_game_mode(self):
+        # classic -> timed (easy) -> timed (medium) -> timed (hard) -> classic
+        if self.game_mode == "classic":
+            self.game_mode = "timed"
+            self.timed_difficulty = "easy"
+        elif self.game_mode == "timed" and self.timed_difficulty == "easy":
+            self.timed_difficulty = "medium"
+        elif self.game_mode == "timed" and self.timed_difficulty == "medium":
+            self.timed_difficulty = "hard"
+        else:
+            self.game_mode = "classic"
+        # reset working area and timers whenever mode changes
+        if self.game_mode == "timed":
+            self.time_remaining = float(self.time_limits[self.timed_difficulty])
+            self.countdown_active = False
+        else:
+            self.time_remaining = None
+            self.countdown_active = False
+
+        self.clear_working_area()
+        print(f"Mode changed to: {self.game_mode}" + (f" ({self.timed_difficulty})" if self.game_mode == "timed" else ""))
+
     def handle_mouse_down(self, pos):
+        if self.game_mode == "timed" and self.time_remaining == 0:
+            if self.new_game_button_rect.collidepoint(pos) or \
+                self.clear_button_rect.collidepoint(pos) or \
+                self.difficulty_button_rect.collidepoint(pos) or \
+                self.game_mode_button_rect.collidepoint(pos):
+                pass
+            else:
+                # block all other interactions (domino dragging/placing)
+                return
+
+        # check if clicking game mode button
+        if self.game_mode_button_rect.collidepoint(pos):
+            self.toggle_game_mode()
+            return
+
         # check if clicking clear button
         if self.clear_button_rect.collidepoint(pos):
             self.clear_working_area()
@@ -139,11 +200,7 @@ class Game:
             self.new_game()
             return
         
-        # check if clicking new game button
-        if self.new_game_button_rect.collidepoint(pos):
-            self.new_game()
-            return
-
+        # check if clicking difficulty button
         if self.difficulty_button_rect.collidepoint(pos):
             self.resetDifficulty()
             return
@@ -171,6 +228,13 @@ class Game:
                 return
 
     def handle_mouse_up(self, pos):
+        # if timed mode ended, cancel any drag and ignore drops (but allow buttons)
+        if self.game_mode == "timed" and self.time_remaining == 0:
+            if self.dragged_domino:
+                self.dragged_domino.stop_drag()
+                self.dragged_domino = None
+            return
+
         if self.dragged_domino:
             # check if domino was dropped in working area
             if self.is_in_working_area(self.dragged_domino.y):
@@ -185,7 +249,14 @@ class Game:
                 # stop timer if sequences match
                 top_seq, bottom_seq = self.get_concatenated_sequences()
                 if top_seq == bottom_seq and len(top_seq) > 0:
-                    self.stop_timer()
+                    if self.game_mode == "timed":
+                        # stop countdown and record the win time (in timed mode)
+                        if self.countdown_active:
+                            self.countdown_active = False
+                            self.last_time = self.time_limits[self.timed_difficulty] - (self.time_remaining if self.time_remaining is not None else 0)
+                            print(f"You win! Time used: {self.last_time:.2f}s")
+                    else:
+                        self.stop_timer()
             else:
                 # if not in working area, don't add it (it's discarded)
                 pass
@@ -213,6 +284,13 @@ class Game:
         """Clear all dominoes from working area and reset timer"""
         self.working_area_dominos = []
         self.reset_timer()
+        # if in timed mode, keep the displayed limit
+        if self.game_mode == "timed":
+            self.time_remaining = float(self.time_limits[self.timed_difficulty])
+            self.countdown_active = False
+        else:
+            self.time_remaining = None
+            self.countdown_active = False
         self.update_highlights()
 
 
@@ -227,6 +305,14 @@ class Game:
         for i, d in enumerate(self.dominos):
             d.x = 50 + i * 120
             d.y = 100
+        # if in timed mode, show the time limit right away
+        if self.game_mode == "timed":
+            self.time_remaining = float(self.time_limits[self.timed_difficulty])
+            self.countdown_active = False
+        else:
+            self.time_remaining = None
+            self.countdown_active = False
+
         self.clear_working_area()
 
     def resetDifficulty(self):
@@ -273,6 +359,65 @@ class Game:
         pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2) # white border
         self.screen.blit(text_surface, timer_rect)
 
+    def draw_countdown(self):
+        """Draws the timed countdown."""
+        if self.game_mode != "timed":
+            return
+        
+        timer_font = pygame.font.Font(None, 36)
+
+        # if there's no time value set, use the difficulty's limit
+        if self.time_remaining is None:
+            display_time = float(self.time_limits[self.timed_difficulty])
+        else:
+            display_time = float(self.time_remaining)
+
+        # label changes depending on whether countdown is running
+        if self.countdown_active:
+            time_text = f"Time Left: {display_time:.2f}s"
+        else:
+            time_text = f"Time Limit: {display_time:.0f}s"
+
+        # colour behavior:
+        # - when active and <=10s -> red
+        # - when active and >10s -> yellow
+        # - when not active -> green
+        if self.countdown_active:
+            if display_time <= 10:
+                color = (255, 80, 80)
+            else:
+                color = (255, 255, 100)
+        else:
+            color = (150, 255, 150)
+
+        text_surface = timer_font.render(time_text, True, color)
+
+        box_w = self.timer_box_width
+        box_h = text_surface.get_height() + 12
+        box_x = (self.screen_width - box_w) // 2
+        box_y = self.clear_button_rect.centery - box_h // 2
+
+        bg_rect = pygame.Rect(box_x, box_y, box_w, box_h)
+        bg_color = (0, 100, 0)
+        pygame.draw.rect(self.screen, bg_color, bg_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2)
+
+        # center text inside the box
+        text_rect = text_surface.get_rect(center=bg_rect.center)
+        self.screen.blit(text_surface, text_rect)
+
+    def draw_time_up_message(self):
+        """Draws game over message"""
+        font = pygame.font.Font(None, 72)
+        text = font.render("GAME OVER", True, (255, 50, 50))
+        rect = text.get_rect(center=(self.screen_width // 2, 325))
+
+        bg = rect.inflate(40, 20)
+        pygame.draw.rect(self.screen, (50, 0, 0), bg)
+        pygame.draw.rect(self.screen, (255, 50, 50), bg, 5)
+
+        self.screen.blit(text, rect)
+
     def run(self):
         print('Starting game...')
 
@@ -285,7 +430,11 @@ class Game:
         
         # initialize highlights (all valid at start)
         self.update_highlights()
-        
+
+        if self.game_mode == "timed" and self.time_remaining is None:
+            self.time_remaining = float(self.time_limits[self.timed_difficulty])
+            self.countdown_active = False
+
         while self.running:
             
             # frame rate timing
@@ -302,6 +451,21 @@ class Game:
                     self.handle_mouse_up(event.pos)
                 elif event.type == pygame.MOUSEMOTION:
                     self.handle_mouse_motion(event.pos)
+            
+            # update timed countdown
+            if self.game_mode == "timed" and self.countdown_active:
+                # handles timer if player wins or not
+                if not self.check_win_condition():
+                    self.time_remaining -= self.delta_time
+                    if self.time_remaining <= 0:
+                        self.time_remaining = 0
+                        self.countdown_active = False
+                        print("Game over (time ran out)!")
+                else:
+                    if self.countdown_active:
+                        self.countdown_active = False
+                        self.last_time = self.time_limits[self.timed_difficulty] - (self.time_remaining if self.time_remaining is not None else 0)
+                        print(f"You win! Time used: {self.last_time:.2f}s")
             
             self.screen.fill((0, 135, 0))
 
@@ -335,12 +499,28 @@ class Game:
             text_rect2 = new_game_text2.get_rect(center=self.difficulty_button_rect.center)
             self.screen.blit(new_game_text2, text_rect2)
 
+            # Game mode button (bottom-right)
+            pygame.draw.rect(self.screen, (100, 50, 200), self.game_mode_button_rect)
+            pygame.draw.rect(self.screen, (255, 255, 255), self.game_mode_button_rect, 2)
+            gm_font = pygame.font.Font(None, 22)
+            if self.game_mode == "classic":
+                gm_text = "Mode: Classic"
+            else:
+                gm_text = f"Timed: {self.timed_difficulty.title()}"
+            gm_surface = gm_font.render(gm_text, True, (255,255,255))
+            gm_rect = gm_surface.get_rect(center=self.game_mode_button_rect.center)
+            self.screen.blit(gm_surface, gm_rect)
+
             # label for working area
             text = font.render("Working Area (Drop Here)", True, (255, 255, 255))
             self.screen.blit(text, (20, self.working_area_y - 40))
             
-            # Draw timer
-            self.draw_timer()
+            # Classic timer
+            if self.game_mode == "classic":
+                self.draw_timer()
+            # Timed countdown timer
+            if self.game_mode == "timed":
+                self.draw_countdown()
 
             # Update highlights every frame to ensure they're current
             self.update_highlights()
@@ -359,6 +539,11 @@ class Game:
             # Check and display win condition
             if self.check_win_condition():
                 self.draw_win_message()
+            
+            if self.game_mode == "timed" and self.time_remaining == 0:
+                # draw game-over message overlay
+                self.draw_time_up_message()
+
             
             for d in self.dominos:
                 d.draw(self.screen)
@@ -431,7 +616,7 @@ class Game:
         """Draw a win message when sequences match"""
         font = pygame.font.Font(None, 72)
         text = font.render("MATCH! YOU WIN!", True, (255, 215, 0))
-        text_rect = text.get_rect(center=(self.screen_width // 2, 300))
+        text_rect = text.get_rect(center=(self.screen_width // 2, 325))
         
         # Draw background for text
         bg_rect = text_rect.inflate(40, 20)

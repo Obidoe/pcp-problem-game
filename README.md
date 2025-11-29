@@ -68,7 +68,7 @@ The purpose of the game is not to solve PCP (which is undecidable), but to allow
 | Harry Rai       | - Level difficulty manipulation
 | Tanisha Ahuja   | - Win condition detection and feedback<br> - Highlighting of next valid dominoes<br> - Calculation of Concatenated top/bottom sequences
 | Zac Adams       | - Random domino generation<br> - Visual domino rendering with random coloured squares
-| Jasraj Gosal    |
+| Jasraj Gosal    | - Timed mode with difficulty levels
 
 ## How the Game Works
 ### The Goal
